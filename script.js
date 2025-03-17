@@ -1,8 +1,6 @@
 async function compressPDF() {
     const fileInput = document.getElementById("pdfFile");
-    const downloadLink = document.getElementById("downloadLink");
-
-    if (!fileInput.files.length) {
+    if (!fileInput || fileInput.files.length === 0) {
         alert("Please select a PDF file.");
         return;
     }
@@ -20,7 +18,7 @@ async function compressPDF() {
 
             copiedPages.forEach((page) => {
                 const { width, height } = page.getSize();
-                page.setSize(width * 0.9, height * 0.9); // Reduce page size slightly
+                page.setSize(width * 0.8, height * 0.8); // Reduce size by 20%
                 newPdf.addPage(page);
             });
 
@@ -28,11 +26,12 @@ async function compressPDF() {
             const blob = new Blob([compressedPdfBytes], { type: "application/pdf" });
             const url = URL.createObjectURL(blob);
 
-            // Show download button
+            const downloadLink = document.getElementById("downloadLink");
             downloadLink.href = url;
             downloadLink.download = "compressed.pdf";
+            downloadLink.style.display = "block";
             downloadLink.textContent = "Download Compressed PDF";
-            downloadLink.classList.remove("hidden");
+
         } catch (error) {
             alert("Error: " + error.message);
         }
