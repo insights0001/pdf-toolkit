@@ -1,89 +1,46 @@
-async function compressPDF() {
-    const fileInput = document.getElementById("pdfFile");
-    if (!fileInput || fileInput.files.length === 0) {
-        alert("Please select a PDF file.");
-        return;
-    }
+document.getElementById("pdfFile").addEventListener("change", handleFile);
 
-    const file = fileInput.files[0];
+async function handleFile(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
     const reader = new FileReader();
-
-    reader.onload = async function(event) {
-        try {
-            const pdfBytes = new Uint8Array(event.target.result);
-            const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true });
-
-            const newPdf = await PDFLib.PDFDocument.create();
-            const copiedPages = await newPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-
-            for (const page of copiedPages) {
-                const { width, height } = page.getSize();
-                page.setSize(width * 0.9, height * 0.9); // Reduce page size
-                newPdf.addPage(page);
-            }
-
-            // ✅ Extract images and compress them
-            const images = pdfDoc.getImages();
-            for (const img of images) {
-                if (img instanceof PDFLib.PngImage || img instanceof PDFLib.JpegImage) {
-                    const compressedImage = await compressImage(img, 0.6); // 60% quality
-                    await newPdf.embedJpg(compressedImage);
-                }
-            }
-
-            // ✅ Remove metadata to save space
-            newPdf.setTitle("");
-            newPdf.setAuthor("");
-            newPdf.setSubject("");
-            newPdf.setProducer("");
-            newPdf.setCreator("");
-
-            // ✅ Convert text to object streams (smaller file size)
-            const compressedPdfBytes = await newPdf.save({ useObjectStreams: true });
-
-            // ✅ Optimize further using pdf.js
-            const optimizedPdf = await optimizeWithPDFJS(compressedPdfBytes);
-
-            // ✅ Save the final compressed PDF
-            const blob = new Blob([optimizedPdf], { type: "application/pdf" });
-            const url = URL.createObjectURL(blob);
-
-            const downloadLink = document.getElementById("downloadLink");
-            downloadLink.href = url;
-            downloadLink.download = "compressed.pdf";
-            downloadLink.style.display = "block";
-            downloadLink.textContent = "Download Compressed PDF";
-
-        } catch (error) {
-            alert("Error: " + error.message);
-        }
+    reader.onload = async function () {
+        const pdfData = new Uint8Array(reader.result);
+        const compressedPdf = await compressPDF(pdfData);
+        downloadCompressedPDF(compressedPdf);
     };
-
     reader.readAsArrayBuffer(file);
 }
 
-// ✅ Function to compress an image
-async function compressImage(image, quality) {
-    return new Promise((resolve) => {
-        const canvas = document.createElement("canvas");
-        const ctx = canvas.getContext("2d");
+async function compressPDF(pdfData) {
+    const pdfDoc = await PDFLib.PDFDocument.load(pdfData);
+    const pages = pdfDoc.getPages();
 
-        canvas.width = image.width * 0.8; // Reduce size
-        canvas.height = image.height * 0.8;
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+    for (const page of pages) {
+        const { width, height } = page.getSize();
 
-        canvas.toBlob((blob) => {
-            const reader = new FileReader();
-            reader.readAsArrayBuffer(blob);
-            reader.onloadend = () => resolve(new Uint8Array(reader.result));
-        }, "image/jpeg", quality);
-    });
+        // Scale images down
+        page.setSize(width * 0.9, height * 0.9); 
+
+        // Reduce embedded images' quality
+        const jpgImages = page.node.resources.get(PDFLib.Name.of('XObject')) || {};
+        for (const key of Object.keys(jpgImages)) {
+            const image = jpgImages[key];
+            if (image instanceof PDFLib.JPEGImage) {
+                const compressedImage = await PDFLib.JPEGImage.embed(pdfDoc, image.bytes, { quality: 0.6 });
+                page.drawImage(compressedImage, { x: 0, y: 0, width, height });
+            }
+        }
+    }
+
+    return await pdfDoc.save();
 }
 
-// ✅ Function to further optimize with pdf.js
-async function optimizeWithPDFJS(pdfBytes) {
-    const loadingTask = pdfjsLib.getDocument({ data: pdfBytes });
-    const pdf = await loadingTask.promise;
-    const pdfData = await pdf.getData();
-    return new Uint8Array(pdfData);
+function downloadCompressedPDF(pdfBytes) {
+    const blob = new Blob([pdfBytes], { type: "application/pdf" });
+    const link = document.getElementById("downloadLink");
+    link.href = URL.createObjectURL(blob);
+    link.style.display = "block";
+    link.download = "compressed.pdf";
 }
