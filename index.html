@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Toolkit</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>PDF Toolkit</h1>
+        <p>Compress, Merge, and Edit PDFs online</p>
+    </header>
+    <main>
+        <section id="tool-selection">
+            <div class="tool-card" onclick="selectTool('compress')">Compress PDF</div>
+            <div class="tool-card" onclick="selectTool('merge')">Merge PDF</div>
+            <div class="tool-card" onclick="selectTool('edit')">Edit PDF</div>
+        </section>
+        <div id="tool-container"></div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>
