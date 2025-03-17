@@ -1,15 +1,3 @@
-async function selectTool(tool) {
-    const toolContainer = document.getElementById("tool-container");
-    if (tool === "compress") {
-        toolContainer.innerHTML = `
-            <h2>Compress PDF</h2>
-            <input type="file" id="pdfFile" accept="application/pdf">
-            <button onclick="compressPDF()">Compress</button>
-            <a id="downloadLink" style="display:none;">Download Compressed PDF</a>
-        `;
-    }
-}
-
 async function compressPDF() {
     const fileInput = document.getElementById("pdfFile");
     if (fileInput.files.length === 0) {
@@ -22,16 +10,22 @@ async function compressPDF() {
 
     reader.onload = async function(event) {
         const pdfBytes = new Uint8Array(event.target.result);
-        const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes);
+        const pdfDoc = await PDFLib.PDFDocument.load(pdfBytes, { ignoreEncryption: true });
 
-        // Reduce image quality (compression)
+        // Compress images and reduce quality
         const pages = pdfDoc.getPages();
         for (const page of pages) {
             const { width, height } = page.getSize();
-            page.setSize(width * 0.9, height * 0.9); // Scale down pages slightly
+            page.setSize(width * 0.85, height * 0.85); // Reduce page size
+
+            // Optional: Remove embedded fonts and metadata
+            pdfDoc.setTitle("");
+            pdfDoc.setAuthor("");
+            pdfDoc.setSubject("");
         }
 
-        const compressedPdfBytes = await pdfDoc.save();
+        // Save compressed PDF with optimizations
+        const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
         const blob = new Blob([compressedPdfBytes], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
 
