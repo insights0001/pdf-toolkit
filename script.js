@@ -41,12 +41,12 @@ document.addEventListener("DOMContentLoaded", async function () {
             reader.onload = async function (event) {
                 try {
                     const existingPdfBytes = new Uint8Array(event.target.result);
-                    const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+                    const { PDFDocument, StandardFonts, rgb } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
 
                     const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                     const pages = pdfDoc.getPages();
 
-                    // Reduce page size aggressively
+                    // Reduce page size
                     for (let page of pages) {
                         const { width, height } = page.getSize();
                         page.setSize(width * 0.85, height * 0.85);
@@ -57,19 +57,15 @@ document.addEventListener("DOMContentLoaded", async function () {
                     pdfDoc.setAuthor("");
                     pdfDoc.setSubject("");
 
-                    // Remove annotations (comments, highlights, form fields)
+                    // Remove annotations
                     for (let page of pages) {
                         page.node.set("Annots", null);
                     }
 
-                    // Remove unused fonts & embedded objects
-                    pdfDoc.cleanup(); // Cleans up unused references
-                    pdfDoc.getEmbeddedFonts().forEach(font => pdfDoc.removeFont(font));
-
-                    // Compress images aggressively
-                    const images = pdfDoc.getImages();
-                    for (const img of images) {
-                        const reducedImg = await pdfDoc.embedJpg(img.bytes, { quality: 0.3 }); // Lower quality
+                    // Compress images
+                    const jpgImages = pdfDoc.getImages();
+                    for (const img of jpgImages) {
+                        const reducedImg = await pdfDoc.embedJpg(img.bytes, { quality: 0.3 });
                         img.replaceWith(reducedImg);
                     }
 
