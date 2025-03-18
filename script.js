@@ -43,21 +43,37 @@ document.addEventListener("DOMContentLoaded", async function () {
                     const existingPdfBytes = new Uint8Array(event.target.result);
                     const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
 
-                    const pdfDoc = await PDFDocument.load(existingPdfBytes);
+                    const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                     const pages = pdfDoc.getPages();
 
-                    // Reduce image quality and optimize structure
+                    // Reduce page size aggressively
                     for (let page of pages) {
                         const { width, height } = page.getSize();
-                        page.setSize(width * 0.9, height * 0.9); // Slightly reduce size to optimize
+                        page.setSize(width * 0.85, height * 0.85);
                     }
 
-                    // Remove unnecessary metadata
+                    // Remove metadata
                     pdfDoc.setTitle("");
                     pdfDoc.setAuthor("");
                     pdfDoc.setSubject("");
 
-                    const compressedPdfBytes = await pdfDoc.save();
+                    // Remove annotations (comments, highlights, form fields)
+                    for (let page of pages) {
+                        page.node.set("Annots", null);
+                    }
+
+                    // Remove unused fonts & embedded objects
+                    pdfDoc.cleanup(); // Cleans up unused references
+                    pdfDoc.getEmbeddedFonts().forEach(font => pdfDoc.removeFont(font));
+
+                    // Compress images aggressively
+                    const images = pdfDoc.getImages();
+                    for (const img of images) {
+                        const reducedImg = await pdfDoc.embedJpg(img.bytes, { quality: 0.3 }); // Lower quality
+                        img.replaceWith(reducedImg);
+                    }
+
+                    const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
                     resolve(compressedPdfBytes);
                 } catch (error) {
                     reject(error);
