@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", async function () {
             reader.onload = async function (event) {
                 try {
                     const existingPdfBytes = new Uint8Array(event.target.result);
-                    const { PDFDocument, StandardFonts, rgb } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+                    const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
 
                     const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
                     const pages = pdfDoc.getPages();
@@ -57,18 +57,11 @@ document.addEventListener("DOMContentLoaded", async function () {
                     pdfDoc.setAuthor("");
                     pdfDoc.setSubject("");
 
-                    // Remove annotations
-                    for (let page of pages) {
-                        page.node.set("Annots", null);
-                    }
+                    // Optimize structure & remove unwanted objects
+                    pdfDoc.setProducer("");
+                    pdfDoc.setCreator("");
 
-                    // Compress images
-                    const jpgImages = pdfDoc.getImages();
-                    for (const img of jpgImages) {
-                        const reducedImg = await pdfDoc.embedJpg(img.bytes, { quality: 0.3 });
-                        img.replaceWith(reducedImg);
-                    }
-
+                    // Save compressed PDF
                     const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
                     resolve(compressedPdfBytes);
                 } catch (error) {
