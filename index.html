@@ -4,27 +4,32 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PDF Compressor</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <div class="container">
-    <h1>PDF Compressor</h1>
+    <h1><i class="fas fa-file-pdf"></i> PDF Compressor</h1>
     <div class="upload-area" id="uploadArea">
-      <p>Drag and drop a PDF file here or click to upload</p>
-      <input type="file" id="fileInput" accept="application/pdf" hidden />
+      <input type="file" id="fileInput" accept="application/pdf" hidden>
+      <div class="upload-content">
+        <i class="fas fa-cloud-upload-alt"></i>
+        <p>Drag and drop a PDF file or <span>click to upload</span></p>
+        <p class="file-name" id="fileName"></p>
+      </div>
     </div>
     <div class="options">
-      <label for="compressionLevel">Compression Level:</label>
+      <label for="compressionLevel"><i class="fas fa-tachometer-alt"></i> Compression Level:</label>
       <select id="compressionLevel" class="compression-level">
-        <option value="low">Low Compression</option>
-        <option value="medium" selected>Medium Compression</option>
-        <option value="high">High Compression</option>
+        <option value="low">Low (Faster)</option>
+        <option value="medium" selected>Medium (Balanced)</option>
+        <option value="high">High (Smaller Size)</option>
       </select>
     </div>
     <div class="progress-container">
       <div class="progress-bar" id="progressBar"></div>
     </div>
-    <button class="compress-btn">Compress Now</button>
+    <button class="compress-btn"><i class="fas fa-compress"></i> Compress Now</button>
   </div>
   <script src="script.js"></script>
 </body>
