@@ -5,7 +5,6 @@ document.addEventListener("DOMContentLoaded", async function () {
 
     let selectedFile = null;
 
-    // Handle file selection
     fileInput.addEventListener("change", function () {
         selectedFile = fileInput.files[0];
         if (selectedFile) {
@@ -13,7 +12,6 @@ document.addEventListener("DOMContentLoaded", async function () {
         }
     });
 
-    // Handle compression button click
     compressBtn.addEventListener("click", async function () {
         if (!selectedFile) {
             alert("Please select a PDF file first.");
@@ -41,55 +39,34 @@ document.addEventListener("DOMContentLoaded", async function () {
             reader.onload = async function (event) {
                 try {
                     const existingPdfBytes = new Uint8Array(event.target.result);
-                    const { PDFDocument, rgb } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+                    const { PDFDocument, StandardFonts } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
 
                     const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
 
-                    // Reduce Image Quality & DPI
-                    for (const page of pdfDoc.getPages()) {
-                        const { width, height } = page.getSize();
-                        page.setSize(width * 0.85, height * 0.85); // Reduce page size
+                    // 🔹 Replace Fonts with Standard Fonts (Reduces File Size)
+                    const pages = pdfDoc.getPages();
+                    const timesRomanFont = await pdfDoc.embedFont(StandardFonts.TimesRoman);
 
-                        const embeddedImages = page.node.dict.get(pdfDoc.context.obj("XObject")) || {};
-                        for (const key in embeddedImages) {
-                            const img = await pdfDoc.embedPng(await embeddedImages[key].data);
-                            page.drawImage(img, {
-                                x: 0,
-                                y: 0,
-                                width: width * 0.85,
-                                height: height * 0.85,
-                                opacity: 0.8, // Reduce opacity slightly for compression
-                            });
-                        }
+                    for (const page of pages) {
+                        page.setFont(timesRomanFont);
                     }
 
-                    // Flatten Forms (Remove interactive elements)
-                    const form = pdfDoc.getForm();
-                    if (form) {
-                        form.flatten();
-                    }
-
-                    // Remove Annotations (Comments, Highlights, etc.)
-                    pdfDoc.getPages().forEach(page => {
-                        page.node.set(pdfDoc.context.obj("Annots"), []);
-                    });
-
-                    // Remove Metadata & Optimize Structure
+                    // 🔹 Optimize Document Metadata
                     pdfDoc.setTitle("");
                     pdfDoc.setAuthor("");
                     pdfDoc.setSubject("");
                     pdfDoc.setProducer("");
                     pdfDoc.setCreator("");
 
-                    // Compress Fonts (Subset fonts to include only used characters)
-                    pdfDoc.getFonts().forEach(font => {
-                        font.subset();
+                    // 🔹 Remove Annotations
+                    pages.forEach(page => {
+                        page.node.set(pdfDoc.context.obj("Annots"), []);
                     });
 
-                    // Save compressed PDF
+                    // 🔹 Save Optimized PDF
                     const compressedPdfBytes = await pdfDoc.save({
-                        useObjectStreams: true, // Further compression
-                        updateFieldAppearances: false, // Reduce form complexity
+                        useObjectStreams: true,
+                        updateFieldAppearances: false,
                     });
 
                     resolve(compressedPdfBytes);
