@@ -6,6 +6,7 @@
     <title>PDF Compressor</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@material-design-icons/font/css/material-icons.min.css">
+    <script defer src="compress.js"></script>
     <style>
         * {
             margin: 0;
@@ -132,15 +133,54 @@
 <body>
     <div class="container">
         <h1>PDF Compressor</h1>
-        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+        <div class="upload-area" id="uploadArea">
             <span class="material-icons upload-icon">cloud_upload</span>
             <p>Drop your PDF here or click to upload</p>
             <input type="file" id="fileInput" accept=".pdf">
         </div>
-        <button class="compress-btn">
+        <button class="compress-btn" id="compressBtn" disabled>
             Compress Now <span class="material-icons">compress</span>
         </button>
         <p class="footer-text">Fast. Simple. Free.</p>
     </div>
+
+    <script>
+        document.getElementById('uploadArea').addEventListener('click', function () {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', function (event) {
+            const file = event.target.files[0];
+            if (file) {
+                document.getElementById('compressBtn').disabled = false;
+            }
+        });
+
+        document.getElementById('compressBtn').addEventListener('click', async function () {
+            const fileInput = document.getElementById('fileInput');
+            if (fileInput.files.length === 0) {
+                alert("Please select a PDF file first.");
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const reader = new FileReader();
+
+            reader.onload = async function (event) {
+                const pdfBytes = new Uint8Array(event.target.result);
+                const compressedPdf = await compressPDF(pdfBytes);
+
+                const blob = new Blob([compressedPdf], { type: "application/pdf" });
+                const link = document.createElement("a");
+                link.href = URL.createObjectURL(blob);
+                link.download = "compressed.pdf";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            reader.readAsArrayBuffer(file);
+        });
+    </script>
 </body>
 </html>
