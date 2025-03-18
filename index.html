@@ -5,22 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Compressor</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 </head>
 <body>
     <div class="container">
         <h1>PDF Compressor</h1>
         <input type="file" id="pdfFile" accept="application/pdf">
-        <button id="compressButton">Compress PDF</button>
+        <button onclick="compressPDF()">Compress PDF</button>
         <a id="downloadLink" style="display: none;">Download Compressed PDF</a>
     </div>
-
-    <!-- PDF-Lib for PDF editing & image embedding -->
-    <script src="https://unpkg.com/pdf-lib@1.16.0/dist/pdf-lib.min.js"></script>
-
-    <!-- PDF.js for deeper compression & optimization -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
-    <!-- Main script -->
     <script src="script.js" defer></script>
 </body>
 </html>
