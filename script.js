@@ -41,28 +41,57 @@ document.addEventListener("DOMContentLoaded", async function () {
             reader.onload = async function (event) {
                 try {
                     const existingPdfBytes = new Uint8Array(event.target.result);
-                    const { PDFDocument } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
+                    const { PDFDocument, rgb } = await import('https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/+esm');
 
                     const pdfDoc = await PDFDocument.load(existingPdfBytes, { ignoreEncryption: true });
-                    const pages = pdfDoc.getPages();
 
-                    // Reduce page size
-                    for (let page of pages) {
+                    // Reduce Image Quality & DPI
+                    for (const page of pdfDoc.getPages()) {
                         const { width, height } = page.getSize();
-                        page.setSize(width * 0.85, height * 0.85);
+                        page.setSize(width * 0.85, height * 0.85); // Reduce page size
+
+                        const embeddedImages = page.node.dict.get(pdfDoc.context.obj("XObject")) || {};
+                        for (const key in embeddedImages) {
+                            const img = await pdfDoc.embedPng(await embeddedImages[key].data);
+                            page.drawImage(img, {
+                                x: 0,
+                                y: 0,
+                                width: width * 0.85,
+                                height: height * 0.85,
+                                opacity: 0.8, // Reduce opacity slightly for compression
+                            });
+                        }
                     }
 
-                    // Remove metadata
+                    // Flatten Forms (Remove interactive elements)
+                    const form = pdfDoc.getForm();
+                    if (form) {
+                        form.flatten();
+                    }
+
+                    // Remove Annotations (Comments, Highlights, etc.)
+                    pdfDoc.getPages().forEach(page => {
+                        page.node.set(pdfDoc.context.obj("Annots"), []);
+                    });
+
+                    // Remove Metadata & Optimize Structure
                     pdfDoc.setTitle("");
                     pdfDoc.setAuthor("");
                     pdfDoc.setSubject("");
-
-                    // Optimize structure & remove unwanted objects
                     pdfDoc.setProducer("");
                     pdfDoc.setCreator("");
 
+                    // Compress Fonts (Subset fonts to include only used characters)
+                    pdfDoc.getFonts().forEach(font => {
+                        font.subset();
+                    });
+
                     // Save compressed PDF
-                    const compressedPdfBytes = await pdfDoc.save({ useObjectStreams: true });
+                    const compressedPdfBytes = await pdfDoc.save({
+                        useObjectStreams: true, // Further compression
+                        updateFieldAppearances: false, // Reduce form complexity
+                    });
+
                     resolve(compressedPdfBytes);
                 } catch (error) {
                     reject(error);
