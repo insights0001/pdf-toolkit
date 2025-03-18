@@ -6,7 +6,7 @@
     <title>PDF Compressor</title>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@material-design-icons/font/css/material-icons.min.css">
-    <script defer src="compress.js"></script>
+    <script defer src="script.js"></script>
     <style>
         * {
             margin: 0;
@@ -16,7 +16,7 @@
         }
 
         body {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            background: linear-gradient(135deg, #5C6BC0, #8E24AA);
             height: 100vh;
             display: flex;
             justify-content: center;
@@ -31,7 +31,7 @@
             width: 90%;
             max-width: 450px;
             text-align: center;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             color: #fff;
             animation: fadeIn 0.6s ease-in-out;
         }
@@ -54,7 +54,7 @@
 
         .upload-area:hover {
             background: rgba(255, 255, 255, 0.2);
-            border-color: #a777e3;
+            border-color: #ffcc80;
         }
 
         .upload-area p {
@@ -75,8 +75,8 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: #fff;
-            color: #6e8efb;
+            background: #ffcc80;
+            color: #333;
             padding: 12px 24px;
             border: none;
             border-radius: 24px;
@@ -87,11 +87,11 @@
             position: relative;
             overflow: hidden;
             text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         .compress-btn:hover {
-            background: #a777e3;
-            color: #fff;
+            background: #ffb74d;
             transform: translateY(-2px);
         }
 
@@ -103,7 +103,7 @@
         .footer-text {
             margin-top: 15px;
             font-size: 0.85rem;
-            opacity: 0.8;
+            opacity: 0.9;
         }
 
         /* Ripple Effect */
